@@ -94,7 +94,7 @@ signals:
 public slots:
     void emitCancel();
     void LoadReply(QNetworkReply *reply);
-    void downloadProgress(qint64 recieved, qint64 total);
+    void ProgressProgress(qint64 recieved, qint64 total);
 };
 
 #endif // QNAMTHREAD_H
