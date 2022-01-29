@@ -94,19 +94,30 @@ void qNamThread::DoJob()
     Error.clear();
     //    custom request with custom header and without
     {
-        QString type;
-        if(method==QNAM_GET)
-            type=GET_Key;
-        else if(method==QNAM_DELETE)
-            type=DELETE_Key;
-        else if(method==QNAM_POST)
-            type=POST_Key;
-        else if(method==QNAM_PUT)
-            type=PUT_Key;
-        else if(method==QNAM_VIEW)
-            type=VIEW_Key;
-        QNAM_MSG("type"<<type);
-        UploadRequestMulti(type);
+        if(method == QNAM_DOWNLOADER or method==QNAM_UPLOADER){
+            switch (method) {
+            case QNAM_DOWNLOADER:
+                Downloader(url);
+                break;
+            case QNAM_UPLOADER:
+                Uploader(output);
+                break;
+            }
+        }else{
+            QString type;
+            if(method==QNAM_GET)
+                type=GET_Key;
+            else if(method==QNAM_DELETE)
+                type=DELETE_Key;
+            else if(method==QNAM_POST)
+                type=POST_Key;
+            else if(method==QNAM_PUT)
+                type=PUT_Key;
+            else if(method==QNAM_VIEW)
+                type=VIEW_Key;
+            QNAM_MSG("type"<<type);
+            UploadRequestMulti(type);
+        }
     }
     if(result.isEmpty() and retry>=0){
         QNAM_MSG(retry<<"Retry"<<result);
@@ -130,7 +141,7 @@ bool qNamThread::Downloader(const QString &Url)
         QNAM_MSG(hkey.Key.toLatin1()<<hkey.Value.toLatin1());
     }
     QNetworkReply *reply=networkManager->sendCustomRequest(request,GET_Key);
-    QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(downloadProgress(qint64,qint64)));
+    QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(ProgressProgress(qint64,qint64)));
     EventLoop(reply);
     QThread::msleep(50);
     return true;
@@ -184,14 +195,19 @@ bool qNamThread::Uploader(const QString &File)
     multiPart->append(file_Part);
 
     QNetworkReply *reply = networkManager->post(request, multiPart.get());
+    QObject::connect(reply, SIGNAL(uploadProgress(qint64,qint64)), this, SLOT(ProgressProgress(qint64,qint64)));
     multiPart->setParent(reply); // delete the multiPart with the reply
     EventLoop(reply);
     QThread::msleep(50);
     return true;
 }
 
-void qNamThread::downloadProgress(qint64 recieved, qint64 total) {
-    qDebug() << recieved << total;
+void qNamThread::ProgressProgress(qint64 recieved, qint64 total) {
+    QNAM_MSG(recieved << total);
+    emit Update(PercentageValue(recieved,total));
+    if(recieved==total){
+        result="Success";
+    }
 }
 
 void qNamThread::downloadFinished(QNetworkReply *data) {
