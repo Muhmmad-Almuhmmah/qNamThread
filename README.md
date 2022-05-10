@@ -6,3 +6,4 @@ Support Features
 - Download Files
 - HTTP Requests types Supported [POST/GET/DELETE/PUT/VIEW]
 - HTTP Requests MultiPart Access [Header/Body request Options]
+- and more ...
