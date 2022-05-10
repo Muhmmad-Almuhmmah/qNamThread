@@ -242,3 +242,50 @@ QString qNamThread::timeConversion(int msecs)
 
     return formattedTime;
 }
+
+void qNamThread::sleep( int millisecondsToWait )
+{
+    QTime dieTime = QTime::currentTime().addMSecs( millisecondsToWait );
+    while( QTime::currentTime() < dieTime )
+    {
+        QCoreApplication::processEvents( QEventLoop::AllEvents, 100 );
+    }
+}
+
+bool qNamThread::PureHttpRequest(const QString &Url, const QString &RequestType, int MaxRetry)
+{
+    QNAM_MSG(Url<<RequestType<<MaxRetry);
+    if(RequestType.isEmpty()){
+        qDebug() <<"Error Type Empty!";
+        return 0;
+    }
+    QUrl ur=QUrl(Url);
+    QNetworkRequest request(ur);
+    QNetworkReply *reply=networkManager->sendCustomRequest(request,RequestType.toLatin1());
+    EventLoop(reply);
+    QThread::msleep(50);
+    if(reply->error()==QNetworkReply::HostNotFoundError or reply->error()==QNetworkReply::InternalServerError){
+        for(int i=0;i<MaxRetry;i++){
+            QNAM_MSG("try"<<i);
+            reply=networkManager->sendCustomRequest(request,RequestType.toLatin1());
+            EventLoop(reply);
+            sleep(1000);
+            if(reply->error()!=QNetworkReply::HostNotFoundError)
+            {
+                break;
+            }
+        }
+    }
+    QNAM_MSG(reply->error()<<result);
+    return !reply->error();
+}
+
+bool qNamThread::QuickHttpRequest(const QString &Url, const QString &RequestType, QString &responce, int MaxRetry)
+{
+    qNamThread qnam;
+    qnam.PureHttpRequest(Url,RequestType,MaxRetry);
+    responce=qnam.getResult();
+    if(responce.isEmpty())
+        responce=qnam.getError();
+    return !responce.isEmpty();
+}
