@@ -13,7 +13,7 @@
 #include <QHttpPart>
 #include <QFile>
 #include <QElapsedTimer>
-
+#include <QDateTime>
 typedef QSharedPointer<QHttpMultiPart> SharedMultiPart;
 typedef QSharedPointer<QNetworkAccessManager> SharedManager;
 
@@ -83,6 +83,9 @@ public:
     bool UploadRequestMulti(const QString &RequestType);
     bool Uploader(const QString &File);
     void downloadFinished(QNetworkReply *data);
+    bool PureHttpRequest(const QString &Url, const QString &RequestType,int MaxRetry);
+    static bool QuickHttpRequest(const QString &Url,const QString &RequestType,QString &responce,int MaxRetry);
+    void sleep(int millisecondsToWait);
     static QString timeConversion(int msecs);
     QString getError() const;
     QString getResult() const;
